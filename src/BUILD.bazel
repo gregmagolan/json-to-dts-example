@@ -1,0 +1,46 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@npm//@bazel/typescript:index.bzl", "ts_project")
+load("@npm//json-to-dts:index.bzl", "json_to_dts")
+load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_test")
+
+write_file(
+    name = "gen_json",
+    out = "gen.json",
+    content = ["""{ "name": "gen-json" }"""],
+)
+
+json_to_dts(
+    name = "gen_json_dts",
+    outs = ["gen.json.d.ts"],
+    data = [":gen.json"],
+    args = ["$(execpath :gen.json) $@"],
+)
+
+ts_project(
+    name = "compile",
+    srcs = [
+        "main.ts",
+        # Include the generated d.ts of the generated json here since including
+        # the generated json in sources causes rootdir violation compilation error
+        # in typescript:
+        #   src/main.ts(1,23): error TS6059: File '/.../execroot/json-to-dts/bazel-out/darwin-fastbuild/bin/src/gen.json'
+        #   is not under 'rootDir' '/.../execroot/json-to-dts/src'. 'rootDir' is expected to contain all source files.
+        # See https://github.com/bazelbuild/rules_nodejs/issues/2843
+        ":gen.json.d.ts", # try ":gen.json" instead to see compile error
+    ],
+    resolve_json_module = True,
+    tsconfig = "tsconfig.json",
+)
+
+# Using nodejs_test here so the bazel run is sandboxed
+# Run with,
+#   bazel run //src:test
+nodejs_test(
+    name = "test",
+    entry_point = ":main.js",
+    data = [
+        ":compile",
+        # Pass the generated json to the data so it can be found at runtime
+        ":gen.json",
+    ]
+)

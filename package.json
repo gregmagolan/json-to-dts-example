@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "@bazel/typescript": "4.4.2",
+        "typescript": "4.4.4",
+        "json-to-dts": "2.0.1"
+    }
+}

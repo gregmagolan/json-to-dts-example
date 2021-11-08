@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "resolveJsonModule": true,
+        "rootDirs": [
+            ".",
+            "../bazel-out/darwin-fastbuild/bin/src",
+            "../bazel-out/k8-fastbuild/bin/src",
+        ]
+    }
+}
